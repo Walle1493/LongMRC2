@@ -47,7 +47,7 @@ from transformers import (WEIGHTS_NAME, BertConfig,
                                   AlbertConfig, AlbertForQuestionAnswering, AlbertTokenizer,
                                   XLMConfig, XLMForQuestionAnswering, XLMTokenizer,
                                   RobertaConfig, RobertaForQuestionAnswering, RobertaTokenizer,
-                                  LongformerConfig, LonformerForQuestionAnswering, LongformerTokenizer,
+                                  LongformerConfig, LongformerForQuestionAnswering, LongformerTokenizer,
                                   )
 
 from transformers import AdamW, get_linear_schedule_with_warmup, squad_convert_examples_to_features
@@ -64,7 +64,7 @@ MODEL_CLASSES = {
     'distilbert': (DistilBertConfig, DistilBertForQuestionAnswering, DistilBertTokenizer),
     'albert': (AlbertConfig, AlbertForQuestionAnswering, AlbertTokenizer),
     'roberta': (RobertaConfig, RobertaForQuestionAnswering, RobertaTokenizer),
-    'longformer': (LongformerConfig, LonformerForQuestionAnswering, LongformerTokenizer),
+    'longformer': (LongformerConfig, LongformerForQuestionAnswering, LongformerTokenizer),
 }
 
 def set_seed(args):
@@ -273,7 +273,7 @@ def evaluate(args, model, tokenizer, prefix=""):
             unique_id = int(eval_feature.unique_id)
 
             # TODO: choose one branch
-            output = [to_list(outputs[0]["start_logits"][i]), to_list(outputs[1]["end_logits"][i])]
+            output = [to_list(outputs[0][i]), to_list(outputs[1][i])]
             # output = [to_list(output[i]) for output in outputs]
 
             # Some models (XLNet, XLM) use 5 arguments for their predictions, while the other "simpler"
