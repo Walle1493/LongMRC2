@@ -263,7 +263,7 @@ def evaluate(args, model, tokenizer, prefix=""):
 
             # ADD: add global_mask
             # if args.model_type in ['longformer', 'bigbird']:
-            #     inputs['global_attention_mask'] = batch[8]
+            #     inputs['global_attention_mask'] = batch[6]
 
             outputs = model(**inputs)
 
@@ -477,7 +477,7 @@ def main():
                         help="If true, all of the warnings related to data processing will be printed. "
                              "A number of warnings are expected for a normal SQuAD evaluation.")
 
-    parser.add_argument('--logging_steps', type=int, default=50,
+    parser.add_argument('--logging_steps', type=int, default=500,
                         help="Log every X updates steps.")
     parser.add_argument('--save_steps', type=int, default=50,
                         help="Save checkpoint every X updates steps.")

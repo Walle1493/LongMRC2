@@ -5,8 +5,8 @@ CUDA_VISIBLE_DEVICES=3 python run_triviaqa.py \
   --data_dir /home/mxdong/Data/triviaqa/squad_format \
   --train_file wikipedia-train-10.json \
   --predict_file wikipedia-dev-10.json \
-  --max_seq_length 4096 \
-  --doc_stride 1024 \
+  --max_seq_length 1024 \
+  --doc_stride 128 \
   --max_query_length 32 \
   --do_train \
   --do_eval \

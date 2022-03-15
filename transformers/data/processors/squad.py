@@ -200,7 +200,7 @@ def squad_convert_example_to_features(
         first_sep_index = encoded_dict["input_ids"].index(tokenizer.sep_token_id)
         encoded_dict["global_attention_mask"][: first_sep_index + 1] = 2
         try:
-            first_pad_index = encoded_dict["global_attention_mask"].index(tokenizer.pad_token_id)
+            first_pad_index = encoded_dict["input_ids"].index(tokenizer.pad_token_id)
             encoded_dict["global_attention_mask"][first_pad_index :] = 0
         except:
             pass
