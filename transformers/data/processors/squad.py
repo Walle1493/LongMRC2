@@ -114,6 +114,7 @@ def squad_convert_example_to_features(
         # If the answer cannot be found in the text, then skip this example.
         actual_text = " ".join(example.doc_tokens[start_position : (end_position + 1)])
         cleaned_answer_text = " ".join(whitespace_tokenize(example.answer_text))
+        actual_text = actual_text.lower()
         if actual_text.find(cleaned_answer_text) == -1:
             logger.warning(f"Could not find answer: '{actual_text}' vs. '{cleaned_answer_text}'")
             return []
@@ -193,6 +194,16 @@ def squad_convert_example_to_features(
             len(all_doc_tokens) - len(spans) * doc_stride,
             max_seq_length - len(truncated_query) - sequence_pair_added_tokens,
         )
+
+        # ADD: add global_attention_mask
+        encoded_dict["global_attention_mask"] = np.ones_like(encoded_dict["input_ids"])
+        first_sep_index = encoded_dict["input_ids"].index(tokenizer.sep_token_id)
+        encoded_dict["global_attention_mask"][: first_sep_index + 1] = 2
+        try:
+            first_pad_index = encoded_dict["global_attention_mask"].index(tokenizer.pad_token_id)
+            encoded_dict["global_attention_mask"][first_pad_index :] = 0
+        except:
+            pass
 
         if tokenizer.pad_token_id in encoded_dict["input_ids"]:
             if tokenizer.padding_side == "right":
@@ -292,6 +303,7 @@ def squad_convert_example_to_features(
             SquadFeatures(
                 span["input_ids"],
                 span["attention_mask"],
+                span["global_attention_mask"].tolist(),
                 span["token_type_ids"],
                 cls_index,
                 p_mask.tolist(),
@@ -407,6 +419,7 @@ def squad_convert_examples_to_features(
         # Convert to Tensors and build dataset
         all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
         all_attention_masks = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
+        all_global_attention_masks = torch.tensor([f.global_attention_mask for f in features], dtype=torch.long)
         all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
         all_cls_index = torch.tensor([f.cls_index for f in features], dtype=torch.long)
         all_p_mask = torch.tensor([f.p_mask for f in features], dtype=torch.float)
@@ -415,7 +428,7 @@ def squad_convert_examples_to_features(
         if not is_training:
             all_feature_index = torch.arange(all_input_ids.size(0), dtype=torch.long)
             dataset = TensorDataset(
-                all_input_ids, all_attention_masks, all_token_type_ids, all_feature_index, all_cls_index, all_p_mask
+                all_input_ids, all_attention_masks, all_token_type_ids, all_feature_index, all_cls_index, all_p_mask, all_global_attention_masks
             )
         else:
             all_start_positions = torch.tensor([f.start_position for f in features], dtype=torch.long)
@@ -429,6 +442,7 @@ def squad_convert_examples_to_features(
                 all_cls_index,
                 all_p_mask,
                 all_is_impossible,
+                all_global_attention_masks,
             )
 
         return features, dataset
@@ -443,6 +457,7 @@ def squad_convert_examples_to_features(
                         {
                             "input_ids": ex.input_ids,
                             "attention_mask": ex.attention_mask,
+                            "global_attention_mask": ex.global_attention_mask,
                             "feature_index": i,
                             "qas_id": ex.qas_id,
                         },
@@ -459,6 +474,7 @@ def squad_convert_examples_to_features(
                         {
                             "input_ids": ex.input_ids,
                             "attention_mask": ex.attention_mask,
+                            "global_attention_mask": ex.global_attention_mask,
                             "token_type_ids": ex.token_type_ids,
                             "feature_index": i,
                             "qas_id": ex.qas_id,
@@ -478,6 +494,7 @@ def squad_convert_examples_to_features(
                 {
                     "input_ids": tf.int32,
                     "attention_mask": tf.int32,
+                    "global_attention_mask": tf.int32,
                     "token_type_ids": tf.int32,
                     "feature_index": tf.int64,
                     "qas_id": tf.string,
@@ -495,6 +512,7 @@ def squad_convert_examples_to_features(
                 {
                     "input_ids": tf.TensorShape([None]),
                     "attention_mask": tf.TensorShape([None]),
+                    "global_attention_mask": tf.TensorShape([None]),
                     "token_type_ids": tf.TensorShape([None]),
                     "feature_index": tf.TensorShape([]),
                     "qas_id": tf.TensorShape([]),
@@ -509,7 +527,7 @@ def squad_convert_examples_to_features(
             )
         else:
             train_types = (
-                {"input_ids": tf.int32, "attention_mask": tf.int32, "feature_index": tf.int64, "qas_id": tf.string},
+                {"input_ids": tf.int32, "attention_mask": tf.int32, "global_attention_mask": tf.int32, "feature_index": tf.int64, "qas_id": tf.string},
                 {
                     "start_positions": tf.int64,
                     "end_positions": tf.int64,
@@ -523,6 +541,7 @@ def squad_convert_examples_to_features(
                 {
                     "input_ids": tf.TensorShape([None]),
                     "attention_mask": tf.TensorShape([None]),
+                    "global_attention_mask": tf.TensorShape([None]),
                     "feature_index": tf.TensorShape([]),
                     "qas_id": tf.TensorShape([]),
                 },
@@ -792,6 +811,7 @@ class SquadFeatures:
         self,
         input_ids,
         attention_mask,
+        global_attention_mask,
         token_type_ids,
         cls_index,
         p_mask,
@@ -809,6 +829,7 @@ class SquadFeatures:
     ):
         self.input_ids = input_ids
         self.attention_mask = attention_mask
+        self.global_attention_mask = global_attention_mask
         self.token_type_ids = token_type_ids
         self.cls_index = cls_index
         self.p_mask = p_mask

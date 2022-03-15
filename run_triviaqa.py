@@ -156,10 +156,9 @@ def train(args, train_dataset, model, tokenizer):
             
             # ADD: add global_mask
             # if args.model_type in ['longformer', 'bigbird']:
-            #     inputs['global_mask'] = batch[8]
+            #     inputs['global_attention_mask'] = batch[8]
 
             outputs = model(**inputs)
-            # TODO: choose one branch
             loss = outputs['loss']
             # loss = outputs[0]  # model outputs are always tuple in transformers (see doc)
 
@@ -264,7 +263,7 @@ def evaluate(args, model, tokenizer, prefix=""):
 
             # ADD: add global_mask
             # if args.model_type in ['longformer', 'bigbird']:
-            #     inputs['global_mask'] = batch[8]
+            #     inputs['global_attention_mask'] = batch[8]
 
             outputs = model(**inputs)
 
@@ -272,8 +271,8 @@ def evaluate(args, model, tokenizer, prefix=""):
             eval_feature = features[example_index.item()]
             unique_id = int(eval_feature.unique_id)
 
-            # TODO: choose one branch
-            output = [to_list(outputs[0][i]), to_list(outputs[1][i])]
+            # output = [to_list(outputs[0][i]), to_list(outputs[1][i])]
+            output = [to_list(outputs["start_logits"][i]), to_list(outputs["end_logits"][i])]
             # output = [to_list(output[i]) for output in outputs]
 
             # Some models (XLNet, XLM) use 5 arguments for their predictions, while the other "simpler"
